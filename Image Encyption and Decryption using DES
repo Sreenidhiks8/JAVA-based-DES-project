@@ -1,0 +1,110 @@
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.spec.*;
+import javax.crypto.*;  
+import javax.crypto.spec.*;
+import javax.imageio.ImageIO;  
+
+public class DES
+{  
+  private static Cipher encrypt;  
+  private static Cipher decrypt;  
+  private static final byte[] initialization_vector = { 22, 33, 11, 44, 55, 99, 66, 77 };  
+  public static void main(String[] args)throws Exception  
+  {  
+    String textFile = "D:/Java Programs/Polymorphism/EX4/DemoData.txt";  
+    String encryptedData = "D:/Java Programs/Polymorphism/EX4/encrypteddata.txt";  
+    String decryptedData = "D:/Java Programs/Polymorphism/EX4/decrypteddata.txt";  
+    SecretKey scrtkey = KeyGenerator.getInstance("DES").generateKey();  
+    AlgorithmParameterSpec aps = new IvParameterSpec(initialization_vector);  
+    encrypt = Cipher.getInstance("DES/CBC/PKCS5Padding");  
+    encrypt.init(Cipher.ENCRYPT_MODE, scrtkey, aps);  
+    decrypt = Cipher.getInstance("DES/CBC/PKCS5Padding");  
+    decrypt.init(Cipher.DECRYPT_MODE, scrtkey, aps);  
+    encryption(new FileInputStream(textFile), new FileOutputStream(encryptedData));  
+    decryption(new FileInputStream(encryptedData), new FileOutputStream(decryptedData));  
+    System.out.println("The encrypted and decrypted files have been created successfully.");  
+
+
+/*
+* This section to enctypt and decrypt image
+*/
+        try {    
+            System.out.println("Encrypted image");
+            BufferedImage sourceimage = ImageIO.read(new File("D:/Java Programs/Polymorphism/EX4/Encimg.jpg"));
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            ImageIO.write(sourceimage, "jpg", bytes);
+            byte[] imgBytes = bytes.toByteArray();
+       //     String resultantimage = Base64.getEncoder().encodeToString(bytes.toByteArray());
+          //  System.out.println(resultantimage);
+            System.out.println();
+            System.out.println();
+            Path path = Paths.get("D:/Java Programs/Polymorphism/EX4/JpgImgout.txt");
+            Files.write(path, imgBytes);
+            System.out.println("THE IMAGE HAS BEEN SUCCESSFULLY CONVERTED TO BYTE STREAM");
+           
+            //Now encrypting the image bytes
+            encryption(new FileInputStream("D:/Java Programs/Polymorphism/EX4/JpgImgout.txt"), new FileOutputStream("D:/Java Programs/Polymorphism/EX4/EncJpgImgOut.txt"));  
+            System.out.println("Done encrypting");
+            // now decrypt the image back
+           System.out.println("Now decrypting the image back");
+           decryption(new FileInputStream("D:/Java Programs/Polymorphism/EX4/EncJpgImgout.txt"), new FileOutputStream("D:/Java Programs/Polymorphism/EX4/DecJpgImgOut.txt"));
+           
+           
+           // now convert byte back to jpg image
+           
+           // read from a file
+           File file = new File ("D:/Java Programs/Polymorphism/EX4/DecJpgImgout.txt");
+           FileInputStream fl = new FileInputStream(file);
+     
+           // Now creating byte array of same length as file
+           byte[] imgByteArr = new byte[(int)file.length()];
+     
+           // Reading file content to byte array
+           // using standard read() method
+           fl.read(imgByteArr);
+     
+           // lastly closing an instance of file input stream
+           // to avoid memory leakage
+           fl.close();
+     
+           
+           ByteArrayInputStream bis = new ByteArrayInputStream(imgByteArr);
+           BufferedImage bImage2 = ImageIO.read(bis);
+           ImageIO.write(bImage2, "jpg", new File("D:/Java Programs/Polymorphism/EX4/Imgoutput.jpg") );
+           System.out.println("image created");
+           
+           
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+       
+
+}  
+private static void encryption(InputStream input, OutputStream output)throws Exception
+{  
+output = new CipherOutputStream(output, encrypt);  
+writeBytes(input, output);  
+}  
+
+private static void decryption(InputStream input, OutputStream output)throws Exception  
+{  
+input = new CipherInputStream(input, decrypt);  
+writeBytes(input, output);  
+}  
+   
+private static void writeBytes(InputStream input, OutputStream output)throws Exception
+{  
+  byte[] writeBuffer = new byte[512];  
+  int readBytes = 0;  
+  while ((readBytes = input.read(writeBuffer)) >= 0)  
+  {  
+      output.write(writeBuffer, 0, readBytes);  
+  }  
+    output.close();  
+    input.close();  
+}  
+}
